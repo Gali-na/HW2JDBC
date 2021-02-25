@@ -29,20 +29,27 @@ public class WorkWithAdmin {
 
     public static void addingProductsDatabase() {
         Scanner scanner = new Scanner(System.in);
+        Product product = new Product();
         System.out.println("Добавьте пожалуйста товар ");
         System.out.println();
         System.out.println("Введите название товара ");
         String nameProduct = scanner.nextLine();
+        product.setName(nameProduct);
         System.out.println("Введите стоимость товара ");
-        String priceProduct = scanner.nextLine();
+       int priceProduct = scanner.nextInt();
+        product.setPrice(priceProduct);
+        System.out.println("Введите количество товара ");
+        int quantity = scanner.nextInt();
+        product.setQuantity(quantity);
         System.out.println("Подтвердите внесенные данные -1");
         int rezult = scanner.nextInt();
         if (rezult == 1) {
             try (Connection connection = DriverManager.getConnection(DB_CONECTION, DB_USER, DB_Password)) {
-                PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO order_database.products (Id, name, price) VALUES (NULL, ?, ?)");
-                preparedStatement.setString(1, nameProduct);
-                preparedStatement.setString(2, priceProduct);
-                preparedStatement.execute();
+                PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO order_database.products (Id, name, price,quantity) VALUES (NULL, ?, ?,?)");
+                preparedStatement.setString(1, product.getName());
+                preparedStatement.setInt(2, product.getPrice());
+                preparedStatement.setInt(3, product.getQuantity());
+                preparedStatement.executeUpdate();
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
             }

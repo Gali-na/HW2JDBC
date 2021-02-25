@@ -24,7 +24,9 @@ public class WorkWithClient {
                 registeringClientDatabase();
             }
             if (result == true) {
-                orderMenu(password);
+                Client client = new Client();
+                client.setPassword(password);
+                orderMenu(client);
             }
         } catch (SQLException throwables) {
             throwables.printStackTrace();
@@ -32,30 +34,35 @@ public class WorkWithClient {
     }
 
     public static void registeringClientDatabase() {
+        Client client = new Client();
         Scanner scanner = new Scanner(System.in);
         System.out.println("Введите ваше имя ");
         String name = scanner.nextLine();
+        client.setName(name);
         System.out.println("Введите фамилию");
         String surname = scanner.nextLine();
+        client.setSurname(surname);
         System.out.println("Введите номер телефона ");
         String namberPhone = scanner.nextLine();
+        client.setPhoneNamber(namberPhone);
         System.out.println("Введите пароль ");
         String password = scanner.nextLine();
+        client.setPassword(password);
         try (Connection connection = DriverManager.getConnection(DB_CONECTION, DB_USER, DB_Password)) {
             PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO order_database.clients (Id, name, surname, phone_number, password) VALUES (NULL, ?, ?,?,?)");
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, surname);
-            preparedStatement.setString(3, namberPhone);
-            preparedStatement.setString(4, password);
-            preparedStatement.execute();
+            preparedStatement.setString(1, client.getName());
+            preparedStatement.setString(2, client.getSurname());
+            preparedStatement.setString(3, client.getPhoneNamber());
+            preparedStatement.setString(4, client.getPassword());
+            preparedStatement.executeUpdate();
             System.out.println(" Вы зарегестрировались");
-            orderMenu(password);
+            orderMenu(client);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
     }
 
-    public static void orderMenu(String password) {
+    public static void orderMenu(Client client) {
         Map<Integer, Integer> idQuantityGoods = new HashMap<>(0);
         Set<Integer> keys = Products.productsList().keySet();
         Scanner scanner = new Scanner(System.in);
@@ -72,15 +79,15 @@ public class WorkWithClient {
                 idQuantityGoods.put(key, numberGoods);
             }
         }
-        recordingIdOrder(idQuantityGoods, password);
+        recordingIdOrder(idQuantityGoods, client);
     }
 
-    public static void recordingIdOrder(Map<Integer, Integer> idQuantityGoods, String password) {
+    public static void recordingIdOrder(Map<Integer, Integer> idQuantityGoods, Client client) {
         int idCurentOrder = 0;
         try (Connection connection = DriverManager.getConnection(DB_CONECTION, DB_USER, DB_Password)) {
             connection.setAutoCommit(false);
             CallableStatement callableStatementOne = connection.prepareCall("{CALL creating_new_record_in_orders_table(?,?)}");
-            callableStatementOne.setString(2, password);
+            callableStatementOne.setString(2, client.getPassword());
             callableStatementOne.execute();
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT order_database.orders.Id  FROM order_database.orders WHERE order_database.orders.sum_order IS NULL;");
@@ -92,8 +99,6 @@ public class WorkWithClient {
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
-
-
     }
 
     public static void recordingOrder(Map<Integer, Integer> idQuantityGoods, int idCurentOrder) {
@@ -101,8 +106,7 @@ public class WorkWithClient {
         try (Connection connection = DriverManager.getConnection(DB_CONECTION, DB_USER, DB_Password)) {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection.prepareStatement("" +
-                    "INSERT INTO order_database.orders_goods(id, id_order, id_product, number_products, price_products, purchase_amount)" +
-                    "VALUE(NULL, ?,?,?,?,?)");
+                    "INSERT INTO order_database.orders_goods(id, id_order, id_product, number_products, price_products, purchase_amount)" + "VALUE(NULL, ?,?,?,?,?)");
             Set<Integer> idProductInOrder = idQuantityGoods.keySet();
             for (Integer idProduct : idProductInOrder) {
                 int quantityGoods = idQuantityGoods.get(idProduct);
